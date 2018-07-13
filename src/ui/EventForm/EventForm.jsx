@@ -17,7 +17,8 @@ import isBefore from 'date-fns/isBefore'
 /* User */
 import * as eventActions from 'store/actions/event-actions'
 import * as eventSelectors from 'store/selectors/events-selectors'
-                                
+
+import ChipRedux from 'ui/ui-elements/ChipRedux'
 import TextFieldRedux from 'ui/ui-elements/TextFieldRedux'
 import SelectRedux from 'ui/ui-elements/SelectRedux'
 import StartEndDateRedux from 'ui/ui-elements/StartEndDateRedux'
@@ -34,19 +35,27 @@ const EDIT_MODE = 'edit-mode'
 const CREATE_MODE = 'create-mode'
 
 const shapeDataOut = (formValues) => {
+  console.log('formValues: ', formValues)
   const dates = pick(['combinedDateTime'], formValues)
-  const tags = pick(['tag01', 'tag02', 'tag03'], formValues)
+  // const tags = pick(['tag01', 'tag02', 'tag03'], formValues)
 
-  const fieldsToOmit = ['combinedDateTime', 'tag01', 'tag02', 'tag03']
-  const fv0 = omit(fieldsToOmit, formValues)
+  // const fieldsToOmit = ['combinedDateTime', 'tag01', 'tag02', 'tag03']
+  // const fv0 = omit(fieldsToOmit, formValues)
   // If free=true, remove field 'price' if present
-  var freeTrue =  formValues.free
-  const fv1 = freeTrue ? omit(['price'], fv0) : fv0
+  var freeTrue = formValues.free
+  // const fv1 = freeTrue ? omit(['price'], fv0) : fv0
+  const fv1 = freeTrue ? omit(['price'], formValues) : formValues
+
+  // const mergedData = mergeAll([
+  //   { endDateTime: dates.combinedDateTime.endDate },
+  //   { startDateTime: dates.combinedDateTime.startDate },
+  //   { tags: values(tags) },
+  //   fv1
+  // ])
 
   const mergedData = mergeAll([
-    {endDateTime: dates.combinedDateTime.endDate},
-    {startDateTime: dates.combinedDateTime.startDate},
-    {tags: values(tags)},
+    { endDateTime: dates.combinedDateTime.endDate },
+    { startDateTime: dates.combinedDateTime.startDate },
     fv1
   ])
   // green('mergedData', mergedData)
@@ -60,6 +69,7 @@ class NewEvent extends React.Component {
   }
 
   onSubmit = (values) => {
+    green('values submitted:  ', values)
     const { mode, requestCreateEvent, requestPatchOneEvent, unsetEdit_id } = this.props
     const validatedValues = shapeDataOut(values)
     this.setState({
@@ -75,17 +85,17 @@ class NewEvent extends React.Component {
       requestPatchOneEvent(validatedValues)
       // requestCreateEvent(validatedValues)
     }
-    
+
 
     /* <Redirect path='/my-events' /> */
   }
 
   freeClick = () => {
     this.setState((prevState) => {
-      return {free: !prevState.free}
+      return { free: !prevState.free }
     })
   }
-  
+
   render() {
     const { classes, handleSubmit, pastEvent, pristine, reset, submitting } = this.props
     // green('_id', _id)
@@ -97,11 +107,11 @@ class NewEvent extends React.Component {
           {
             pastEvent
               ? <div>
-                  <Typography variant='display1' className={classes.pastEvent}>
-                    This event is in the past
+                <Typography variant='display1' className={classes.pastEvent}>
+                  This event is in the past
                   </Typography></div>
               : null
-          } 
+          }
           <form onSubmit={handleSubmit(this.onSubmit)}>
             <UploadImage
               fieldName='imageUrl'
@@ -153,47 +163,39 @@ class NewEvent extends React.Component {
               {
                 !this.state.free
                   ? <TextFieldRedux
-                      fullWidth
-                      fieldLabel='Price'
-                      fieldName='price'
-                      disabled={this.state.free}
-                    />
+                    fullWidth
+                    fieldLabel='Price'
+                    fieldName='price'
+                    disabled={this.state.free}
+                  />
                   : null
               }
-              
+
               <CheckboxRedux
                 fieldLabel='Free'
                 fieldName='free'
                 onChange={() => this.freeClick()}
               />
             </div>
-            
-            
+
+
             <div className={classes.categoryArea}>
               <SelectRedux
                 fieldName='category'
                 fieldLabel='Category'
                 fullWidth
-              > 
+              >
                 <MenuItem value='' disabled>Placeholder</MenuItem>
                 <MenuItem value='quadcopter'>Quadcopter</MenuItem>
-                
+
               </SelectRedux>
 
             </div>
 
             <div className={classes.tagArea}>
-              <TextFieldRedux
-                fieldLabel='tag 1'
-                fieldName='tag01'
-              />
-              <TextFieldRedux
-                fieldLabel='tag 2'
-                fieldName='tag02'
-              />
-              <TextFieldRedux
-                fieldLabel='tag 3'
-                fieldName='tag03'
+              <ChipRedux
+                fieldLabel='tags'
+                fieldName='tags'
               />
             </div>
             <div>
@@ -235,24 +237,25 @@ class NewEvent extends React.Component {
 // }
 
 const shapeDataIn = (data) => {
-  
-  
+
+
   // is it a past event
-  const r1 = omit(['tags', 'startDateTime', 'endDateTime'], data)
-  const r2 = mergeAll ([
+  // const r1 = omit(['tags', 'startDateTime', 'endDateTime'], data) // HM
+  const r1 = omit(['startDateTime', 'endDateTime'], data)
+  const r2 = mergeAll([
     r1,
     zipObj(
-        ['combinedDateTime'],
-        [zipObj(['startDate', 'endDate'], [data.startDateTime, data.endDateTime])]
-      ), 
-    zipObj(['tag01', 'tag02', 'tag03'], data.tags)
+      ['combinedDateTime'],
+      [zipObj(['startDate', 'endDate'], [data.startDateTime, data.endDateTime])]
+    ),
+    // zipObj(['tag01', 'tag02', 'tag03'], data.tags) // HM
   ])
   // green('shapeData: r2', r2)
   return r2
 }
 
 const mapStateToProps = (state) => {
-  
+
   const _id = eventSelectors.getEventEdit_id(state)
   // if there is an _id then form is in edit mode
   const mode = _id ? EDIT_MODE : CREATE_MODE
@@ -262,7 +265,7 @@ const mapStateToProps = (state) => {
     const startDate = prop('startDateTime', data)
     const pastEvent = isBefore(startDate, new Date())
     const shapedData = shapeDataIn(data)
-    
+
     return {
       initialValues: shapedData,
       free: prop('free', shapedData),
