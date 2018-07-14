@@ -1,72 +1,41 @@
-import React, { Component } from 'react'
+import React from 'react'
+import PropTypes from 'prop-types'
+// import ChipInput from 'material-ui-chip-input'
 import { Field } from 'redux-form'
-// import { Chip } from '@material-ui/core'
-import ChipInput from 'material-ui-chip-input'
-
-
-import FormControl from '@material-ui/core/FormControl'
+import Chips from './Chips'
 
 /* Dev */
-// import { green } from 'logger'
-
-/*
-    error: in redux-form, error is a text field. In mui it is a boolean
-*/
+import { green } from 'logger'
 
 
-class ChipInputComponent extends Component {
+class ChipRedux extends React.Component {
 
-  state = {
-    chips: []
-  }
+  picker = (props) => {
+    const { onChange, ...rest } = props.input
+    return (
+      <Chips
+        {...rest}
+        onChange={onChange}
 
-  handleAddChip = (chip) => {
-    console.log(`chip: ${chip}`)
-    this.setState((prevState) => {
-      return { chips: [...prevState.chips, chip] }
-    })
-    console.log('chips: ', this.state.chips)
-  }
-
-  handleDeleteChip = (chip, index) => {
-    console.log(`chip: ${chip}, index: ${index}`)
-    const idx = this.state.chips.indexOf()
-    if (this.idx !== -1) {
-      this.state.chips.splice(idx, 1)
-    }
+      />
+    )
   }
 
   render() {
-    const { input, label, name, meta, ...custom } = this.props
-    const { error, touched } = meta
-    const { ...customRest } = custom
-    const hasErrorSet = typeof error === 'undefined' ? false : true
-    const isError = hasErrorSet && touched
+    const { fieldName } = this.props
     return (
-      <ChipInput
-        value={this.state.chips}
-        error={isError}
-        label={label}
-        name={name}
-        onAdd={(chip) => this.handleAddChip(chip)}
-        onDelete={(chip, index) => this.handleDeleteChip(chip, index)}
-        fullWidth />
+      <Field
+        component={this.picker}
+        name={fieldName}
+      />
     )
+
+
   }
 }
 
-const ChipRedux = props => {
-  const { fieldName, fieldLabel } = props
-
-  return (
-    <FormControl>
-      <Field
-        component={ChipInputComponent}
-        label={fieldLabel}
-        name={fieldName}
-      />
-    </FormControl>
-  )
+ChipRedux.propTypes = {
+  addOnBlur: PropTypes.bool
 }
 
 export default ChipRedux
